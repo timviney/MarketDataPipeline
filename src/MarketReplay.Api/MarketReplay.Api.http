@@ -1,0 +1,6 @@
+@MarketReplay.Api_HostAddress = http://localhost:5223
+
+GET {{MarketReplay.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
