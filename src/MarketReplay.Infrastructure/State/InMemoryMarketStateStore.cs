@@ -1,6 +1,6 @@
 ﻿using MarketReplay.Core.Domain.Interfaces;
 
-namespace MarketReplay.Core.Domain.Services.State;
+namespace MarketReplay.Infrastructure.State;
 
 public class InMemoryMarketStateStore : IMarketStateStore
 {

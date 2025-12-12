@@ -1,7 +1,7 @@
 ﻿namespace MarketReplay.Core.Domain.Model;
 
 public record MarketTick(
-    string Ticker,
+    string Symbol,
     string Period,
     DateOnly Date,
     TimeOnly Time,

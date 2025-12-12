@@ -20,4 +20,5 @@ RUN dotnet publish "MarketReplay.Api.csproj" -c $BUILD_CONFIGURATION -o /app/pub
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+COPY data ./data
 ENTRYPOINT ["dotnet", "MarketReplay.Api.dll"]

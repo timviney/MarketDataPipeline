@@ -1,7 +1,8 @@
 using MarketReplay.Api.Endpoints;
 using MarketReplay.Core.Domain.Interfaces;
 using MarketReplay.Core.Domain.Services.Replay;
-using MarketReplay.Core.Domain.Services.State;
+using MarketReplay.Infrastructure.Data;
+using MarketReplay.Infrastructure.State;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +14,7 @@ builder.Services.AddHealthChecks();
 
 builder.Services.AddSingleton<IReplayEngine, ReplayEngine>();
 builder.Services.AddSingleton<IMarketStateStore, InMemoryMarketStateStore>();
+builder.Services.AddSingleton<IDataDirectory, ContainerDataDirectory>();
 
 var app = builder.Build();
 
