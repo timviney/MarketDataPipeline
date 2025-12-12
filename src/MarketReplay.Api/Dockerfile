@@ -1,4 +1,8 @@
 ﻿FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+
+ENV LANG=en_GB.UTF-8 \
+    LC_ALL=en_GB.UTF-8
+
 USER $APP_UID
 WORKDIR /app
 EXPOSE 8080

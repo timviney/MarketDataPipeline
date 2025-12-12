@@ -1,6 +1,8 @@
 using MarketReplay.Api.Endpoints;
 using MarketReplay.Core.Domain.Interfaces;
-using MarketReplay.Core.Domain.Services.Replay;
+using MarketReplay.Core.Services.Pipeline;
+using MarketReplay.Core.Services.Pipeline.Processors;
+using MarketReplay.Core.Services.Replay;
 using MarketReplay.Infrastructure.Data;
 using MarketReplay.Infrastructure.State;
 
@@ -15,6 +17,13 @@ builder.Services.AddHealthChecks();
 builder.Services.AddSingleton<IReplayEngine, ReplayEngine>();
 builder.Services.AddSingleton<IMarketStateStore, InMemoryMarketStateStore>();
 builder.Services.AddSingleton<IDataDirectory, ContainerDataDirectory>();
+builder.Services.AddSingleton<IMarketDataProvider, CsvMarketDataProvider>();
+builder.Services.AddSingleton<IEventPipeline, EventPipeline>();
+builder.Services.AddSingleton<IEventProcessor[]>(sp =>
+[
+    new StateStoreProcessor(sp.GetRequiredService<IMarketStateStore>()),
+    new CalculationProcessor(sp.GetRequiredService<IMarketStateStore>())
+]);
 
 var app = builder.Build();
 

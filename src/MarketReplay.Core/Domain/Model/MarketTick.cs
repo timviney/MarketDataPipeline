@@ -3,8 +3,7 @@
 public record MarketTick(
     string Symbol,
     string Period,
-    DateOnly Date,
-    TimeOnly Time,
+    DateTime DateTime,
     decimal Open,
     decimal High,
     decimal Low,

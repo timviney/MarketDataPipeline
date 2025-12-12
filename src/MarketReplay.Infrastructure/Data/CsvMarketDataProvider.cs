@@ -33,11 +33,7 @@ public class CsvMarketDataProvider(IDataDirectory dataDirectory) : IMarketDataPr
                     var close = values[4];
                     var vol = values[5];
 
-                    var dateTimeValue = DateTime.Parse(dateTime);
-                    var date = new DateOnly(dateTimeValue.Year, dateTimeValue.Month, dateTimeValue.Day);
-                    var time = new TimeOnly(dateTimeValue.Hour, dateTimeValue.Minute, 0);
-
-                    var tick = new MarketTick(symbol, Granularity, date, time, decimal.Parse(open),
+                    var tick = new MarketTick(symbol, Granularity, DateTime.Parse(dateTime), decimal.Parse(open),
                         decimal.Parse(high), decimal.Parse(low), decimal.Parse(close), (int)Math.Round(double.Parse(vol)));
                     
                     results.Add(tick);

@@ -2,7 +2,7 @@
 
 namespace MarketReplay.Core.Domain.Interfaces;
 
-public interface IMarketDataProvider
+public interface IEventPipeline
 {
-    Task<List<MarketTick>> LoadData();
+    Task PublishAsync(MarketTick tick);
 }

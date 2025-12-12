@@ -2,7 +2,7 @@
 
 namespace MarketReplay.Core.Domain.Interfaces;
 
-public interface IMarketDataProvider
+public interface IEventProcessor
 {
-    Task<List<MarketTick>> LoadData();
+    Task ProcessAsync(MarketTick tick);
 }

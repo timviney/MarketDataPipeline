@@ -9,7 +9,9 @@ public class ContainerDataDirectory : IDataDirectory
 
     public string DataPath()
     {
-        return Path.Combine(AppContext.BaseDirectory, "data");
+        //TODO fix so this is testable locally and in the container!
+        //return "C:\\Dev\\MarketDataPipeline\\data";
+        return "data";
     }
 
     public IFileSystem FileSystem => _fileSystem;
