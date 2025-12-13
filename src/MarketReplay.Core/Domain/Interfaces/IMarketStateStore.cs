@@ -4,6 +4,7 @@ namespace MarketReplay.Core.Domain.Interfaces;
 
 public interface IMarketStateStore
 {
+    void Clear();
     void UpdateLatestTick(MarketTick tick);
     void UpdateCalculations(TickCalculations calculations);
     Dictionary<DateTime, MarketTick> GetHistory(string symbol);

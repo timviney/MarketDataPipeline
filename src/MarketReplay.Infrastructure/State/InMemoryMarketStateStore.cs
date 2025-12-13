@@ -9,6 +9,14 @@ public class InMemoryMarketStateStore : IMarketStateStore
     private readonly ConcurrentDictionary<string, MarketTick> _latest = new();
     private readonly ConcurrentDictionary<string, ConcurrentDictionary<DateTime, MarketTick>> _history = new();
     private readonly ConcurrentDictionary<string, ConcurrentDictionary<DateTime, TickCalculations>> _calculationHistory = new();
+    
+    public void Clear()
+    {
+        _latest.Clear();
+        _history.Clear();
+        _calculationHistory.Clear();
+    }
+
     public void UpdateLatestTick(MarketTick tick)
     {
         _latest[tick.Symbol] = tick;

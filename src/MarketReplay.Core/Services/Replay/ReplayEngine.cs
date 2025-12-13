@@ -3,7 +3,7 @@ using MarketReplay.Core.Domain.Model;
 
 namespace MarketReplay.Core.Services.Replay;
 
-public class ReplayEngine(IMarketDataProvider dataProvider, IEventPipeline pipeline) : IReplayEngine
+public class ReplayEngine(IMarketDataProvider dataProvider, IEventPipeline pipeline, IMarketStateStore stateStore) : IReplayEngine
 {
     private int _step;
     private List<MarketTick>? _data;
@@ -12,6 +12,7 @@ public class ReplayEngine(IMarketDataProvider dataProvider, IEventPipeline pipel
     {
         _data = await dataProvider.LoadData();
         _step = 0;
+        stateStore.Clear();
     }
 
     public async Task<bool> StepAsync()

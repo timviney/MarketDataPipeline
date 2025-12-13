@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', function () {
         yAxis: { title: { text: 'Price GBp' } },
         series: [{
             name: 'BARC Closing Price',
-            data: [] // Start empty
+            data: []
         }]
     });
 
@@ -15,16 +15,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
     async function fetchData() {
         try {
-            console.log('Fetching data from API...');
             const response = await fetch(apiUrl);
             if (!response.ok) throw new Error('Network response was not ok');
-            console.log('Fetched data from API...');
 
             // The data is the Dictionary<DateTime, TickCalculations> object
             const dictionaryData = await response.json();
-            console.log('Data received:', dictionaryData);
 
             const series = chart.series[0];
+            const newData = [];
 
             for (const dateTimeKey in dictionaryData) {
                 if (dictionaryData.hasOwnProperty(dateTimeKey)) {
@@ -32,16 +30,16 @@ document.addEventListener('DOMContentLoaded', function () {
                     // Get the TickCalculations object for this time
                     const calculations = dictionaryData[dateTimeKey];
 
-
                     const t = new Date(dateTimeKey).getTime();
                     const sma = calculations.dailySma;
                     const closingPrice = calculations.tick.close;
 
-                    console.log(`Plotting: Time=${t}, price=${closingPrice}, SMA=${sma}`);
-
-                    series.addPoint([t, closingPrice], true);
+                    newData.push([t, closingPrice]);
                 }
             }
+
+            newData.sort((a, b) => a[0] - b[0]);
+            series.setData(newData, true);
 
         } catch (error) {
             console.error('Fetch error:', error);
