@@ -13,6 +13,7 @@ public class ReplayEngineTests
     private IMarketDataProvider? _dataProvider;
     private IEventPipeline _eventPipeline;
     private Fixture _fixture;
+    private IMarketStateStore _marketStateStore;
 
     [SetUp]
     public void Setup()
@@ -20,7 +21,8 @@ public class ReplayEngineTests
         _fixture = new Fixture();
         _dataProvider = Substitute.For<IMarketDataProvider>();
         _eventPipeline = Substitute.For<IEventPipeline>();
-        _engine = new ReplayEngine(_dataProvider, _eventPipeline);
+        _marketStateStore = Substitute.For<IMarketStateStore>();
+        _engine = new ReplayEngine(_dataProvider, _eventPipeline, _marketStateStore);
     }
     
     [Test]

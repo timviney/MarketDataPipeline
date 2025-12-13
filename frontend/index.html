@@ -1,18 +1,65 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Market Data Ticker</title>
+    <title>Market Dashboard</title>
     <script src="https://code.highcharts.com/highcharts.js"></script>
-    <style>
-        body { font-family: sans-serif; padding: 20px; }
-        #container { min-width: 310px; height: 400px; margin: 0 auto; }
-    </style>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 </head>
+
 <body>
-    <h2>Live Market Data</h2>
-    <div id="container"></div>
+    <div class="dashboard">
+        <div class="header">
+            <div class="brand">
+                <div class="brand-icon">🚀</div>
+                <h1>Market Dashboard</h1>
+            </div>
+            <div class="controller">
+                <button class="controller-btn play-btn" title="Play" id="play-btn">
+                    <i class="fas fa-play"></i>
+                </button>
+                <button class="controller-btn pause-btn" title="Pause" id="pause-btn">
+                    <i class="fas fa-pause"></i>
+                </button>
+                <button class="controller-btn stop-btn" title="Stop" id="stop-btn">
+                    <i class="fas fa-stop"></i>
+                </button>
+                <div class="status offline" id="status">
+                    <span>Stopped</span>
+                    <div class="status-dot offline" id="status-dot"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Current Price</div>
+                <div class="stat-value" id="current-price">--</div>
+                <div class="stat-change" id="price-change">--</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Daily SMA</div>
+                <div class="stat-value" id="daily-sma">--</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Data Points</div>
+                <div class="stat-value" id="data-points">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Last Update</div>
+                <div class="stat-value" id="last-update" style="font-size: 18px;">--</div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <div id="container"></div>
+        </div>
+    </div>
     <script src="app.js"></script>
+
 </body>
+
 </html>
