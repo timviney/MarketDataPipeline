@@ -28,7 +28,7 @@ builder.Services.AddHealthChecks();
 
 builder.Services.AddSingleton<IReplayEngine, ReplayEngine>();
 builder.Services.AddSingleton<IMarketStateStore, InMemoryMarketStateStore>();
-builder.Services.AddSingleton<IDataDirectory, ContainerDataDirectory>();
+builder.Services.AddSingleton<IDataDirectory, DataDirectory>();
 builder.Services.AddSingleton<IMarketDataProvider, CsvMarketDataProvider>();
 builder.Services.AddSingleton<IEventPipeline, EventPipeline>();
 builder.Services.AddSingleton(Channel.CreateUnbounded<EngineCommand>());
@@ -41,6 +41,8 @@ builder.Services.AddSingleton<IEventProcessor[]>(sp =>
 ]);
 
 var app = builder.Build();
+
+app.UseCors("AllowAll");
 
 var useSwagger = true; // usually "app.Environment.IsDevelopment();" but we want swagger on permanently
 if (useSwagger)

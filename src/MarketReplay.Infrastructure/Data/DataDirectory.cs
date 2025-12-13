@@ -3,7 +3,7 @@ using MarketReplay.Core.Domain.Interfaces;
 
 namespace MarketReplay.Infrastructure.Data;
 
-public class ContainerDataDirectory : IDataDirectory
+public class DataDirectory : IDataDirectory
 {
     private readonly FileSystem _fileSystem = new();
 

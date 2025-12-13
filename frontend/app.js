@@ -1,12 +1,12 @@
 document.addEventListener('DOMContentLoaded', function () {
-    
+
     // Initialize the chart
     const chart = Highcharts.chart('container', {
         title: { text: 'Simulated Market Ticks' },
         xAxis: { type: 'datetime' },
-        yAxis: { title: { text: 'Price / SMA' } },
+        yAxis: { title: { text: 'Price GBp' } },
         series: [{
-            name: 'SMA Value',
+            name: 'BARC Closing Price',
             data: [] // Start empty
         }]
     });
@@ -15,23 +15,33 @@ document.addEventListener('DOMContentLoaded', function () {
 
     async function fetchData() {
         try {
+            console.log('Fetching data from API...');
             const response = await fetch(apiUrl);
             if (!response.ok) throw new Error('Network response was not ok');
-            
-            const data = await response.json();
-            
-            // Assuming your API returns object like: { time: "2023-...", value: 102.5 }
-            // Highcharts wants [timestamp, value]
-            
-            // Adjust this parsing based on your actual C# DTO structure
-            const x = new Date(data.time).getTime(); 
-            const y = data.value; 
+            console.log('Fetched data from API...');
+
+            // The data is the Dictionary<DateTime, TickCalculations> object
+            const dictionaryData = await response.json();
+            console.log('Data received:', dictionaryData);
 
             const series = chart.series[0];
-            
-            // Add point. (true = redraw, true = shift if > 20 points)
-            const shift = series.data.length > 20; 
-            series.addPoint([x, y], true, shift);
+
+            for (const dateTimeKey in dictionaryData) {
+                if (dictionaryData.hasOwnProperty(dateTimeKey)) {
+
+                    // Get the TickCalculations object for this time
+                    const calculations = dictionaryData[dateTimeKey];
+
+
+                    const t = new Date(dateTimeKey).getTime();
+                    const sma = calculations.dailySma;
+                    const closingPrice = calculations.tick.close;
+
+                    console.log(`Plotting: Time=${t}, price=${closingPrice}, SMA=${sma}`);
+
+                    series.addPoint([t, closingPrice], true);
+                }
+            }
 
         } catch (error) {
             console.error('Fetch error:', error);
