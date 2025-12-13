@@ -31,7 +31,10 @@ public class InMemoryMarketStateStore : IMarketStateStore
         symbolHistory[calculations.Tick.DateTime] = calculations;
     }
 
-    public Dictionary<DateTime, MarketTick> GetHistory(string symbol) => _history[symbol].ToDictionary();
+    public Dictionary<DateTime, MarketTick> GetHistory(string symbol) => _history.GetValueOrDefault(symbol)?.ToDictionary() 
+                                                                         ?? new Dictionary<DateTime, MarketTick>();
+    public Dictionary<DateTime, TickCalculations> GetCalculationHistory(string symbol) => _calculationHistory.GetValueOrDefault(symbol)?.ToDictionary() 
+                                                                         ?? new Dictionary<DateTime, TickCalculations>();
     public MarketTick? GetLatest(string symbol) => _latest.GetValueOrDefault(symbol);
     public List<string> GetSymbols() => _history.Keys.ToList();
 }

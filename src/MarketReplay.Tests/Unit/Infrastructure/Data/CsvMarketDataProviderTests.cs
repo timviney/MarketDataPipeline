@@ -80,8 +80,7 @@ public class CsvMarketDataProviderTests
         var tick = result.First();
         Assert.That(tick.Symbol, Is.EqualTo("Symbol1"));
         Assert.That(tick.Period, Is.EqualTo("5Min"));
-        Assert.That(tick.Date, Is.EqualTo(new DateOnly(2023, 1, 1)));
-        Assert.That(tick.Time, Is.EqualTo(new TimeOnly(10, 0, 0)));
+        Assert.That(tick.DateTime, Is.EqualTo(new DateTime(2023, 1, 1, 10, 0, 0)));
         Assert.That(tick.Open, Is.EqualTo(48.5m));
         Assert.That(tick.High, Is.EqualTo(50m));
         Assert.That(tick.Low, Is.EqualTo(45m));

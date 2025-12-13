@@ -24,21 +24,21 @@ public static class SymbolEndpoints
             .WithName("Get Latest Tick")
             .WithTags("Symbols");
 
-        // group.MapGet("/{symbol}/summary", (string symbol, IMarketStateStore store) =>
-        //     {
-        //         var summary = store.GetSummary(symbol);
-        //         return summary is null ? Results.NotFound() : Results.Ok(summary);
-        //     })
-        //     .WithName("Get Symbol Summary")
-        //     .WithTags("Symbols");
+        group.MapGet("/{symbol}/history", (string symbol, IMarketStateStore store) =>
+            {
+                var history = store.GetHistory(symbol);
+                return Results.Ok(history);
+            })
+            .WithName("Get Symbol History")
+            .WithTags("Symbols");
 
-        // group.MapGet("/{symbol}/anomalies", (string symbol, IMarketStateStore store) =>
-        //     {
-        //         var anomalies = store.GetAnomalies(symbol);
-        //         return Results.Ok(anomalies);
-        //     })
-        //     .WithName("Get Symbol Anomalies")
-        //     .WithTags("Symbols");
+        group.MapGet("/{symbol}/calculations", (string symbol, IMarketStateStore store) =>
+            {
+                var history = store.GetCalculationHistory(symbol);
+                return Results.Ok(history);
+            })
+            .WithName("Get Symbol Calculations")
+            .WithTags("Symbols");
 
         return routes;
     }

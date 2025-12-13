@@ -9,8 +9,6 @@ public class ContainerDataDirectory : IDataDirectory
 
     public string DataPath()
     {
-        //TODO fix so this is testable locally and in the container!
-        //return "C:\\Dev\\MarketDataPipeline\\data";
         return "data";
     }
 

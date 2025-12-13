@@ -10,4 +10,8 @@
       <PackageReference Include="System.IO.Abstractions" Version="22.1.0" />
     </ItemGroup>
 
+    <ItemGroup>
+        <InternalsVisibleTo Include="MarketReplay.Tests" />
+    </ItemGroup>
+
 </Project>

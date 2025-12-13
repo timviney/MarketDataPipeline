@@ -1,4 +1,6 @@
-﻿using MarketReplay.Core.Domain.Interfaces;
+﻿using System.Threading.Channels;
+using MarketReplay.Api.Background;
+using MarketReplay.Core.Domain.Interfaces;
 
 namespace MarketReplay.Api.Endpoints;
 
@@ -8,34 +10,34 @@ public static class ReplayEndpoints
     {
         var group = routes.MapGroup("/replay");
 
-        group.MapPost("/start", async (IReplayEngine replay, int speed) =>
+        group.MapPost("/start", async (ReplayState state, Channel<EngineCommand> ch, int speed) =>
             {
-                await replay.StartAsync(speed); //TODO shouldn't get stuck here
-                return Results.Ok(new { Status = "Started", Speed = speed });
+                await ch.Writer.WriteAsync(new StartEngineCommand(speed));
+                return Results.Ok(new { State = state });
             })
             .WithName("Start Replay")
             .WithTags("Replay");
 
-        group.MapPost("/pause", async (IReplayEngine replay) =>
+        group.MapPost("/pause", async (ReplayState state, Channel<EngineCommand> ch) =>
             {
-                await replay.PauseAsync();
-                return Results.Ok(new { Status = "Paused" });
+                await ch.Writer.WriteAsync(new PauseEngineCommand());
+                return Results.Ok(new { State = state });
             })
             .WithName("Pause Replay")
             .WithTags("Replay");
 
-        group.MapPost("/stop", async (IReplayEngine replay) =>
+        group.MapPost("/stop", async (ReplayState state, Channel<EngineCommand> ch) =>
             {
-                await replay.StopAsync(); //TODO should crash here
-                return Results.Ok(new { Status = "Stopped" }); 
+                await ch.Writer.WriteAsync(new StopEngineCommand());
+
+                return Results.Ok(new { State = state }); 
             })
             .WithName("Stop Replay")
             .WithTags("Replay");
 
-        group.MapGet("/status", (IReplayEngine replay) =>
+        group.MapGet("/status", (ReplayState state) =>
             {
-                var status = replay.GetStatus();
-                return Results.Ok(new { Status = status });
+                return Results.Ok(new { State = state });
             })
             .WithName("Replay Status")
             .WithTags("Replay");

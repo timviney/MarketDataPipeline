@@ -10,4 +10,8 @@
       <ProjectReference Include="..\MarketReplay.Core\MarketReplay.Core.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+        <InternalsVisibleTo Include="MarketReplay.Tests" />
+    </ItemGroup>
+
 </Project>
