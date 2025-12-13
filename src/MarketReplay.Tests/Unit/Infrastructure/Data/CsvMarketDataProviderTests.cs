@@ -35,7 +35,7 @@ public class CsvMarketDataProviderTests
     public async Task LoadData_ShouldReturnEmpty_WhenNoFilesExistInDirectory()
     {
         // Arrange
-        _dataDirectory.AddDirectory("Symbol1", "5Min");
+        _dataDirectory.AddDirectory("Symbol1", "5min");
 
         // Act
         var result = await _provider.LoadData();
@@ -54,7 +54,7 @@ public class CsvMarketDataProviderTests
             "DateTime,Open,High,Low,Close,Volume\n" +
             "2023-01-01 10:00:00,InvalidData,50,45,48,100";
 
-        _dataDirectory.AddFile(malformedCsv, "23-01.csv", "Symbol1", "5Min");
+        _dataDirectory.AddFile(malformedCsv, "23-01.csv", "Symbol1", "5min");
 
         // Act & Assert
         Assert.ThrowsAsync<FormatException>(async () => await _provider.LoadData());
@@ -69,7 +69,7 @@ public class CsvMarketDataProviderTests
             "DateTime,Open,High,Low,Close,Volume\n" +
             "2023-01-01 10:00:00,48.5,50,45,48,100";
 
-        _dataDirectory.AddFile(validCsv, "23-01.csv", "Symbol1", "5Min");
+        _dataDirectory.AddFile(validCsv, "23-01.csv", "Symbol1", "5min");
 
         // Act
         var result = await _provider.LoadData();
@@ -79,7 +79,7 @@ public class CsvMarketDataProviderTests
         Assert.That(result.Count, Is.EqualTo(1));
         var tick = result.First();
         Assert.That(tick.Symbol, Is.EqualTo("Symbol1"));
-        Assert.That(tick.Period, Is.EqualTo("5Min"));
+        Assert.That(tick.Period, Is.EqualTo("5min"));
         Assert.That(tick.DateTime, Is.EqualTo(new DateTime(2023, 1, 1, 10, 0, 0)));
         Assert.That(tick.Open, Is.EqualTo(48.5m));
         Assert.That(tick.High, Is.EqualTo(50m));

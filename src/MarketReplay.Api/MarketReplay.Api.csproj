@@ -29,12 +29,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Update="data\BARC\5min\25-08.csv">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-    </ItemGroup>
-
-    <ItemGroup>
         <InternalsVisibleTo Include="MarketReplay.Tests" />
     </ItemGroup>
 

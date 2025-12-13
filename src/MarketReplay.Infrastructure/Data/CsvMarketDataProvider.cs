@@ -5,7 +5,7 @@ namespace MarketReplay.Infrastructure.Data;
 
 public class CsvMarketDataProvider(IDataDirectory dataDirectory) : IMarketDataProvider
 {
-    private const string Granularity = "5Min";
+    private const string Granularity = "5min";
     
     public async Task<List<MarketTick>> LoadData()
     {

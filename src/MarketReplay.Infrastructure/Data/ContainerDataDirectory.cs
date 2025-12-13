@@ -9,7 +9,13 @@ public class ContainerDataDirectory : IDataDirectory
 
     public string DataPath()
     {
-        return "data";
+        var currentDirectory = _fileSystem.Directory.GetCurrentDirectory();
+
+        var solutionRoot = Path.GetFullPath(Path.Combine(currentDirectory, "../.."));
+
+        var folder = currentDirectory.Contains("/app") ? "app/data" : "data";
+
+        return Path.Combine(solutionRoot, folder);
     }
 
     public IFileSystem FileSystem => _fileSystem;
