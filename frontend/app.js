@@ -3,7 +3,18 @@ document.addEventListener('DOMContentLoaded', function () {
     // Initialize the chart
     const chart = Highcharts.chart('container', {
         title: { text: 'Simulated Market Ticks' },
-        xAxis: { type: 'datetime' },
+        xAxis: {
+            type: 'linear',
+            labels: {
+                formatter: function () {
+                    const series = this.axis.series[0];
+                    const point = series.points.find(p => p.x === this.value);
+                    return point?.realTime
+                        ? Highcharts.dateFormat('%d-%m %H:%M', point.realTime)
+                        : '';
+                }
+            }
+        },
         yAxis: { title: { text: 'Price GBp' } },
         series: [{
             name: 'BARC Closing Price',
@@ -24,6 +35,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const series = chart.series[0];
             const newData = [];
 
+
             for (const dateTimeKey in dictionaryData) {
                 if (dictionaryData.hasOwnProperty(dateTimeKey)) {
 
@@ -34,11 +46,16 @@ document.addEventListener('DOMContentLoaded', function () {
                     const sma = calculations.dailySma;
                     const closingPrice = calculations.tick.close;
 
-                    newData.push([t, closingPrice]);
+                    newData.push({ y: closingPrice, realTime: t, sma: sma });
                 }
             }
 
-            newData.sort((a, b) => a[0] - b[0]);
+            // This is suboptimal - we should ideally avoid re-sorting and re-assigning x values on every fetch
+            newData.sort((a, b) => a.realTime - b.realTime);
+            let barInx = 0;
+            newData.forEach(point => {
+                point.x = barInx++;
+            });
             series.setData(newData, true);
 
         } catch (error) {
