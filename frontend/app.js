@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
     let previousPrice = null;
 
     const chart = Highcharts.chart('container', {
@@ -69,6 +69,53 @@ document.addEventListener('DOMContentLoaded', function () {
         credits: { enabled: false }
     });
 
+    // LOGIN
+
+    const getTokenUrl = 'http://localhost:5000/login';
+
+    async function getToken() {
+        try {
+            const response = await fetch(getTokenUrl);
+            if (!response.ok) throw new Error('Failed to fetch token');
+            const data = await response.json();
+            console.log("Successfully minted and received token.");
+            return data.token;
+
+        } catch (error) {
+            console.error("Token acquisition error:", error);
+            return null;
+        }
+    }
+
+    const jwtToken = await getToken();
+
+    async function authorizedFetch(url, options = {}) {
+        if (!jwtToken) {
+            console.error("JWT is missing. Cannot make authenticated request.");
+            // Attempt to re-fetch and throw if still null
+            if (!await getAuthToken()) {
+                throw new Error("Authentication required.");
+            }
+        }
+
+        const headers = {
+            // Crucial step: Adding the Bearer token to the Authorization header
+            'Authorization': `Bearer ${jwtToken}`,
+
+            // Ensure you preserve any existing headers, or add Content-Type for POSTs
+            'Content-Type': 'application/json',
+            ...options.headers
+        };
+
+        return fetch(url, {
+            ...options,
+            headers: headers
+        });
+    }
+
+    ///
+
+    // REPLAY CONTROLS
     const playBtn = document.getElementById('play-btn');
     const pauseBtn = document.getElementById('pause-btn');
     const stopBtn = document.getElementById('stop-btn');
@@ -79,17 +126,16 @@ document.addEventListener('DOMContentLoaded', function () {
     const statusEl = document.getElementById('status');
     const statusDot = document.getElementById('status-dot');
 
-    const statusUrl = 'http://localhost:5001/replay/status';
-    const playUrl = 'http://localhost:5001/replay/start';
-    const pauseUrl = 'http://localhost:5001/replay/pause';
-    const stopUrl = 'http://localhost:5001/replay/stop';
-    const adjustSpeedUrl = 'http://localhost:5001/replay/adjustspeed';
-
+    const statusUrl = 'http://localhost:5000/replay/status';
+    const playUrl = 'http://localhost:5000/replay/start';
+    const pauseUrl = 'http://localhost:5000/replay/pause';
+    const stopUrl = 'http://localhost:5000/replay/stop';
+    const adjustSpeedUrl = 'http://localhost:5000/replay/adjustspeed';
     async function getStatus() {
         //TODO: will update these with live SignalR connection
         try {
             await new Promise(resolve => setTimeout(resolve, 500)); // Brief delay to allow server processing - will be removed with SignalR
-            const response = await fetch(statusUrl);
+            const response = await authorizedFetch(statusUrl);
             if (!response.ok) throw new Error('Network response was not ok');
             const state = (await response.json()).state;
             statusEl.querySelector('span').textContent = state.status;
@@ -104,7 +150,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     playBtn.addEventListener('click', () => {
         try {
-            fetch(playUrl, { method: 'POST' });
+            authorizedFetch(playUrl, { method: 'POST' });
         } catch (error) {
             console.error('Error starting replay:', error);
         }
@@ -113,7 +159,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     pauseBtn.addEventListener('click', () => {
         try {
-            fetch(pauseUrl, { method: 'POST' });
+            authorizedFetch(pauseUrl, { method: 'POST' });
         } catch (error) {
             console.error('Error pausing replay:', error);
         }
@@ -122,7 +168,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     stopBtn.addEventListener('click', () => {
         try {
-            fetch(stopUrl, { method: 'POST' });
+            authorizedFetch(stopUrl, { method: 'POST' });
         } catch (error) {
             console.error('Error stopping replay:', error);
         }
@@ -134,7 +180,7 @@ document.addEventListener('DOMContentLoaded', function () {
     speedUpBtn.addEventListener('click', () => {
         try {
             speed = Math.min(99, speed + 1);
-            fetch(`${adjustSpeedUrl}?speed=${speed}`, { method: 'POST' });
+            authorizedFetch(`${adjustSpeedUrl}?speed=${speed}`, { method: 'POST' });
             speedDisplayTens.className = `fa-solid fa-${Math.floor(speed / 10)}`;
             speedDisplayOnes.className = `fa-solid fa-${speed % 10}`;
         } catch (error) {
@@ -145,7 +191,7 @@ document.addEventListener('DOMContentLoaded', function () {
     speedDownBtn.addEventListener('click', () => {
         try {
             speed = Math.max(1, speed - 1);
-            fetch(`${adjustSpeedUrl}?speed=${speed}`, { method: 'POST' });
+            authorizedFetch(`${adjustSpeedUrl}?speed=${speed}`, { method: 'POST' });
             speedDisplayTens.className = `fa-solid fa-${Math.floor(speed / 10)}`;
             speedDisplayOnes.className = `fa-solid fa-${speed % 10}`;
         } catch (error) {
@@ -153,11 +199,15 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    const calculationsUrl = 'http://localhost:5001/symbols/BARC/calculations';
+    //////
 
-    async function fetchData() {
+    // DATA FETCHING AND CHART UPDATING
+
+    const calculationsUrl = 'http://localhost:5000/symbols/BARC/calculations';
+
+    async function fetchChartData() {
         try {
-            const response = await fetch(calculationsUrl);
+            const response = await authorizedFetch(calculationsUrl);
             if (!response.ok) throw new Error('Network response was not ok');
 
             const dictionaryData = await response.json();
@@ -208,25 +258,29 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    setInterval(fetchData, 5000); //TODO: will replace with SignalR live updates
+    setInterval(fetchChartData, 5000); //TODO: will replace with SignalR live updates
+
+    //////
 
     // Test SignalR
+
     const connection = new signalR.HubConnectionBuilder()
-        // Use the same URL as mapped in Program.cs
-        .withUrl("http://localhost:5001/notificationHub")
-        .withAutomaticReconnect() // Highly recommended to handle disconnections
+        .withUrl("http://localhost:5000/notificationHub", {
+            accessTokenFactory: () => jwtToken,
+            transport: signalR.HttpTransportType.LongPolling // Websockets causing Docker issues locally
+        })
+        .withAutomaticReconnect()
         .build();
 
-    // 1. Define the handler for messages pushed from the server
-    // The string "ReceiveMessage" must match the name used in Clients.All.SendAsync() on the server
     connection.on("ReceiveMessage", (user, message) => {
         console.log(`Message from ${user}: ${message}`);
     });
 
-    // 2. Start the connection
     connection.start()
         .then(() => {
             console.log("SignalR Connected.");
         })
         .catch(err => console.error("Error connecting to SignalR: ", err));
+
+    //////
 });

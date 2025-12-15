@@ -7,6 +7,8 @@ public static class SymbolEndpoints
     public static IEndpointRouteBuilder MapSymbolEndpoints(this IEndpointRouteBuilder routes)
     {
         var group = routes.MapGroup("/symbols");
+        
+        group.RequireAuthorization();
 
         group.MapGet("/", (IMarketStateStore store) =>
             {

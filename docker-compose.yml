@@ -4,7 +4,7 @@ services:
       context: ./
       dockerfile: src/MarketReplay.Api/Dockerfile 
     ports:
-      - "5001:8080" # Swagger UI on host port 5001
+      - "5000:8080" # Swagger UI on host port 5000
     environment:
       - ASPNETCORE_URLS=http://+:8080
       - ASPNETCORE_HTTPS_PORT=

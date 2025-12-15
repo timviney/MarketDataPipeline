@@ -10,6 +10,8 @@ public static class ReplayEndpoints
     {
         var group = routes.MapGroup("/replay");
 
+        group.RequireAuthorization();
+
         group.MapPost("/start", async (ReplayState state, Channel<EngineCommand> engineCommandChannel, Channel<StateUpdate> stateUpdateChannel) =>
             {
                 await engineCommandChannel.Writer.WriteAsync(new StartEngineCommand());
