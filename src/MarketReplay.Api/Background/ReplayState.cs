@@ -1,7 +1,9 @@
-﻿namespace MarketReplay.Api.Background;
+﻿using System.Threading.Channels;
+
+namespace MarketReplay.Api.Background;
 
 // Singleton - source of truth
-public class ReplayState
+public class ReplayState(Channel<StateUpdate> channel)
 {
     private readonly object _lock = new();
 
@@ -11,7 +13,7 @@ public class ReplayState
     
     public string Status => IsRunning ? (IsPaused ? "Paused" : "Running") : "Stopped";
     
-    public void UpdateState(bool? isRunning = null, bool? isPaused = null, int? speed = null)
+    public async Task UpdateState(bool? isRunning = null, bool? isPaused = null, int? speed = null)
     {
         lock (_lock)
         {
@@ -19,5 +21,7 @@ public class ReplayState
             IsPaused = isPaused ?? IsPaused;
             Speed = speed ?? Speed;
         }
+
+        await channel.Writer.WriteAsync(new StateUpdate(this));
     }
 }

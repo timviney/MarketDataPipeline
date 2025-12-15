@@ -72,13 +72,35 @@ document.addEventListener('DOMContentLoaded', function () {
     const playBtn = document.getElementById('play-btn');
     const pauseBtn = document.getElementById('pause-btn');
     const stopBtn = document.getElementById('stop-btn');
+    const speedUpBtn = document.getElementById('speed-up-btn');
+    const speedDownBtn = document.getElementById('speed-down-btn');
+    const speedDisplayTens = document.getElementById('speed-tens-digit');
+    const speedDisplayOnes = document.getElementById('speed-ones-digit');
     const statusEl = document.getElementById('status');
     const statusDot = document.getElementById('status-dot');
 
     const statusUrl = 'http://localhost:5001/replay/status';
-    const playUrl = 'http://localhost:5001/replay/start?speed=1'; //TODO: speed control once added to backend
+    const playUrl = 'http://localhost:5001/replay/start';
     const pauseUrl = 'http://localhost:5001/replay/pause';
     const stopUrl = 'http://localhost:5001/replay/stop';
+    const adjustSpeedUrl = 'http://localhost:5001/replay/adjustspeed';
+
+    async function getStatus() {
+        //TODO: will update these with live SignalR connection
+        try {
+            await new Promise(resolve => setTimeout(resolve, 500)); // Brief delay to allow server processing - will be removed with SignalR
+            const response = await fetch(statusUrl);
+            if (!response.ok) throw new Error('Network response was not ok');
+            const state = (await response.json()).state;
+            statusEl.querySelector('span').textContent = state.status;
+            statusDot.className = state.status === 'Running' ? 'status-dot running' : state.status === 'Paused' ? 'status-dot paused' : 'status-dot stopped';
+            statusEl.className = state.status === 'Running' ? 'status running' : state.status === 'Paused' ? 'status paused' : 'status stopped';
+        } catch (error) {
+            console.error('Error fetching status:', error);
+        }
+    }
+
+    getStatus();
 
     playBtn.addEventListener('click', () => {
         try {
@@ -86,9 +108,7 @@ document.addEventListener('DOMContentLoaded', function () {
         } catch (error) {
             console.error('Error starting replay:', error);
         }
-        statusEl.querySelector('span').textContent = 'Running'; //TODO will update these with live SignalR connection
-        statusDot.className = 'status-dot online';
-        statusEl.className = 'status online';
+        getStatus();
     });
 
     pauseBtn.addEventListener('click', () => {
@@ -97,9 +117,7 @@ document.addEventListener('DOMContentLoaded', function () {
         } catch (error) {
             console.error('Error pausing replay:', error);
         }
-        statusEl.querySelector('span').textContent = 'Paused';
-        statusDot.className = 'status-dot offline';
-        statusEl.className = 'status offline';
+        getStatus();
     });
 
     stopBtn.addEventListener('click', () => {
@@ -108,9 +126,31 @@ document.addEventListener('DOMContentLoaded', function () {
         } catch (error) {
             console.error('Error stopping replay:', error);
         }
-        statusEl.querySelector('span').textContent = 'Stopped';
-        statusDot.className = 'status-dot offline';
-        statusEl.className = 'status offline';
+        getStatus();
+    });
+
+    let speed = 1;
+
+    speedUpBtn.addEventListener('click', () => {
+        try {
+            speed = Math.min(99, speed + 1);
+            fetch(`${adjustSpeedUrl}?speed=${speed}`, { method: 'POST' }); 
+            speedDisplayTens.className = `fa-solid fa-${Math.floor(speed/10)}`;
+            speedDisplayOnes.className = `fa-solid fa-${speed%10}`;
+        } catch (error) {
+            console.error('Error speeding up replay:', error);
+        }
+    });
+
+    speedDownBtn.addEventListener('click', () => {
+        try {
+            speed = Math.max(1, speed - 1);
+            fetch(`${adjustSpeedUrl}?speed=${speed}`, { method: 'POST' }); 
+            speedDisplayTens.className = `fa-solid fa-${Math.floor(speed/10)}`;
+            speedDisplayOnes.className = `fa-solid fa-${speed%10}`;
+        } catch (error) {
+            console.error('Error slowing down replay:', error);
+        }
     });
 
     const calculationsUrl = 'http://localhost:5001/symbols/BARC/calculations';

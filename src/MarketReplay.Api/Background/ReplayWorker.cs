@@ -5,9 +5,12 @@ namespace MarketReplay.Api.Background;
 
 public class ReplayWorker(IReplayEngine engine, Channel<EngineCommand> channel, ReplayState state) : BackgroundService
 {
+    private const int DefaultSpeed = 1;
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var commandReader = channel.Reader;
+        
+        await state.UpdateState(isRunning: false, isPaused: false, speed: DefaultSpeed);
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -15,17 +18,22 @@ public class ReplayWorker(IReplayEngine engine, Channel<EngineCommand> channel, 
             {
                 switch (command)
                 {
-                    case StartEngineCommand start:
-                        state.UpdateState(isRunning: true, isPaused: false, speed: start.Speed);
-                        await engine.StartAsync(); // load data
+                    case StartEngineCommand:
+                        var wasRunning = state.IsRunning; // only restart if already stopped
+                        await state.UpdateState(isRunning: true, isPaused: false);
+                        if (!wasRunning) await engine.StartAsync(); // load data
                         break;
 
                     case PauseEngineCommand:
-                        state.UpdateState(isPaused: !state.IsPaused);
+                        await state.UpdateState(isPaused: !state.IsPaused);
                         break;
 
                     case StopEngineCommand:
-                        state.UpdateState(isRunning: false, isPaused: false);
+                        await state.UpdateState(isRunning: false, isPaused: false);
+                        break;
+                    
+                    case AdjustSpeedEngineCommand adjustSpeedCommand:
+                        await state.UpdateState(speed: adjustSpeedCommand.Speed);
                         break;
                 }
             }
@@ -33,7 +41,7 @@ public class ReplayWorker(IReplayEngine engine, Channel<EngineCommand> channel, 
             if (state is { IsRunning: true, IsPaused: false })
             {
                 var hasMore = await engine.StepAsync();
-                if (!hasMore) state.UpdateState(isRunning: false, isPaused: false);
+                if (!hasMore) await state.UpdateState(isRunning: false, isPaused: false);
                 
                 if (state.Speed > 0) await Task.Delay(1000 / state.Speed, stoppingToken);
             }

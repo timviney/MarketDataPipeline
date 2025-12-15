@@ -10,29 +10,44 @@ public static class ReplayEndpoints
     {
         var group = routes.MapGroup("/replay");
 
-        group.MapPost("/start", async (ReplayState state, Channel<EngineCommand> ch, int speed) =>
+        group.MapPost("/start", async (ReplayState state, Channel<EngineCommand> engineCommandChannel, Channel<StateUpdate> stateUpdateChannel) =>
             {
-                await ch.Writer.WriteAsync(new StartEngineCommand(speed));
+                await engineCommandChannel.Writer.WriteAsync(new StartEngineCommand());
+                await WaitForStateUpdateAsync(stateUpdateChannel);
+                
                 return Results.Ok(new { State = state });
             })
             .WithName("Start Replay")
             .WithTags("Replay");
 
-        group.MapPost("/pause", async (ReplayState state, Channel<EngineCommand> ch) =>
+        group.MapPost("/pause", async (ReplayState state, Channel<EngineCommand> engineCommandChannel, Channel<StateUpdate> stateUpdateChannel) =>
             {
-                await ch.Writer.WriteAsync(new PauseEngineCommand());
+                await engineCommandChannel.Writer.WriteAsync(new PauseEngineCommand());
+                await WaitForStateUpdateAsync(stateUpdateChannel);
+                
                 return Results.Ok(new { State = state });
             })
             .WithName("Pause Replay")
             .WithTags("Replay");
 
-        group.MapPost("/stop", async (ReplayState state, Channel<EngineCommand> ch) =>
+        group.MapPost("/stop", async (ReplayState state, Channel<EngineCommand> engineCommandChannel, Channel<StateUpdate> stateUpdateChannel) =>
             {
-                await ch.Writer.WriteAsync(new StopEngineCommand());
+                await engineCommandChannel.Writer.WriteAsync(new StopEngineCommand());
+                await WaitForStateUpdateAsync(stateUpdateChannel);
 
                 return Results.Ok(new { State = state }); 
             })
             .WithName("Stop Replay")
+            .WithTags("Replay");
+
+        group.MapPost("/adjustspeed", async (ReplayState state, Channel<EngineCommand> engineCommandChannel, Channel<StateUpdate> stateUpdateChannel, int speed) =>
+            {
+                await engineCommandChannel.Writer.WriteAsync(new AdjustSpeedEngineCommand(speed));
+                await WaitForStateUpdateAsync(stateUpdateChannel);
+
+                return Results.Ok(new { State = state }); 
+            })
+            .WithName("Adjust Replay Speed")
             .WithTags("Replay");
 
         group.MapGet("/status", (ReplayState state) =>
@@ -43,5 +58,11 @@ public static class ReplayEndpoints
             .WithTags("Replay");
 
         return routes;
+    }
+
+    private static async Task WaitForStateUpdateAsync(Channel<StateUpdate> stateUpdateChannel)
+    {
+        var maxWaitCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+        await stateUpdateChannel.Reader.WaitToReadAsync(maxWaitCancellation.Token); // wait for state to be updated
     }
 }

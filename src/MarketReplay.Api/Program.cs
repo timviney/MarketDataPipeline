@@ -32,7 +32,8 @@ builder.Services.AddSingleton<IDataDirectory, DataDirectory>();
 builder.Services.AddSingleton<IMarketDataProvider, CsvMarketDataProvider>();
 builder.Services.AddSingleton<IEventPipeline, EventPipeline>();
 builder.Services.AddSingleton(Channel.CreateUnbounded<EngineCommand>());
-builder.Services.AddSingleton(new ReplayState());
+builder.Services.AddSingleton(Channel.CreateUnbounded<StateUpdate>());
+builder.Services.AddSingleton(sp => new ReplayState(sp.GetRequiredService<Channel<StateUpdate>>()));
 builder.Services.AddHostedService<ReplayWorker>();
 builder.Services.AddSingleton<IEventProcessor[]>(sp =>
 [

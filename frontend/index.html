@@ -18,6 +18,18 @@
                 <h1>Market Dashboard</h1>
             </div>
             <div class="controller">
+                <div class="speed-group">
+                    <button class="controller-btn speed-btn" id="speed-down-btn">
+                        <i class="fa-solid fa-minus"></i>
+                    </button>
+                    <div class="speed-label">
+                        <i id="speed-tens-digit" class="fa-solid fa-0"></i>
+                        <i id="speed-ones-digit" class="fa-solid fa-1"></i>
+                    </div>
+                    <button class="controller-btn speed-btn" id="speed-up-btn">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
                 <button class="controller-btn play-btn" title="Play" id="play-btn">
                     <i class="fas fa-play"></i>
                 </button>
@@ -27,9 +39,9 @@
                 <button class="controller-btn stop-btn" title="Stop" id="stop-btn">
                     <i class="fas fa-stop"></i>
                 </button>
-                <div class="status offline" id="status">
+                <div class="status stopped" id="status">
                     <span>Stopped</span>
-                    <div class="status-dot offline" id="status-dot"></div>
+                    <div class="status-dot stopped" id="status-dot"></div>
                 </div>
             </div>
         </div>

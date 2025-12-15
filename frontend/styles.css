@@ -49,7 +49,7 @@ body {
 .brand-icon {
     width: 40px;
     height: 40px;
-    background: #3b82f6;
+    background: #285193;
     border-radius: 8px;
     display: flex;
     align-items: center;
@@ -73,34 +73,43 @@ h1 {
     padding: 6px 14px;
     border-radius: 6px;
     width: 110px;
-    justify-content: space-between; 
+    justify-content: space-between;
     font-size: 16px;
 }
 
-.status.online {
+.status.running {
     background: #064e3b;
     border: 1px solid #059669;
 }
 
-.status.offline {
+.status.stopped {
     background: #7f1d1d;
     border: 1px solid #ef4444;
+}
+
+.status.paused {
+    background: #78350f;
+    border: 1px solid #f59e0b;
 }
 
 .status-dot {
     width: 6px;
     height: 6px;
     border-radius: 50%;
-}
-
-.status-dot.online {
-    background: #22c55e;
     animation: pulse 2s ease-in-out infinite;
 }
 
-.status-dot.offline {
+.status-dot.running {
+    background: #22c55e;
+}
+
+.status-dot.stopped {
     background: #ef4444;
     animation: none;
+}
+
+.status-dot.paused {
+    background: #f59e0b;
 }
 
 @keyframes pulse {
@@ -268,4 +277,46 @@ h1 {
 .stop-btn:hover {
     background: #172225;
     box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+}
+
+.speed-group {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-right: 15px;
+}
+
+.speed-label {
+    /* background: #334155; */
+    border: 1px solid #475569;
+    color: #3a78db;
+    padding: 0 10px;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 32px;
+    height: 32px;
+    min-width: 50px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#speed-tens-digit {
+    margin-right: 4px;
+}
+
+.speed-btn {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    color: #3a78db;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.speed-btn:hover {
+    /* background: #475569; */
+    box-shadow: 0 2px 8px rgba(100, 116, 139, 0.3);
 }
