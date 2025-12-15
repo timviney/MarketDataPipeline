@@ -1,12 +1,14 @@
 using System.Threading.Channels;
 using MarketReplay.Api.Background;
 using MarketReplay.Api.Endpoints;
+using MarketReplay.Api.Hubs;
 using MarketReplay.Core.Domain.Interfaces;
 using MarketReplay.Core.Services.Pipeline;
 using MarketReplay.Core.Services.Pipeline.Processors;
 using MarketReplay.Core.Services.Replay;
 using MarketReplay.Infrastructure.Data;
 using MarketReplay.Infrastructure.State;
+using Microsoft.AspNetCore.SignalR;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,9 +18,10 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowAll",
         policy =>
         {
-            policy.AllowAnyOrigin()
-                .AllowAnyHeader()
-                .AllowAnyMethod();
+            policy.AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials()
+                .SetIsOriginAllowed(_ => true);
         });
 });
 
@@ -41,6 +44,8 @@ builder.Services.AddSingleton<IEventProcessor[]>(sp =>
     new CalculationProcessor(sp.GetRequiredService<IMarketStateStore>())
 ]);
 
+builder.Services.AddSignalR();
+
 var app = builder.Build();
 
 app.UseCors("AllowAll");
@@ -56,5 +61,15 @@ if (useSwagger)
 
 app.MapReplayEndpoints();
 app.MapSymbolEndpoints();
+
+app.MapHub<NotificationHub>("/notificationHub");
+
+app.MapPost("/sendNotification", async (string user, string message, IHubContext<NotificationHub> hubContext) =>
+{
+    await hubContext.Clients.All.SendAsync("ReceiveMessage", user, message);
+    return Results.Ok();
+})
+.WithName("Test Notification")
+.WithTags("_Test");
 
 app.Run();

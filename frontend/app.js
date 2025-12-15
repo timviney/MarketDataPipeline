@@ -134,9 +134,9 @@ document.addEventListener('DOMContentLoaded', function () {
     speedUpBtn.addEventListener('click', () => {
         try {
             speed = Math.min(99, speed + 1);
-            fetch(`${adjustSpeedUrl}?speed=${speed}`, { method: 'POST' }); 
-            speedDisplayTens.className = `fa-solid fa-${Math.floor(speed/10)}`;
-            speedDisplayOnes.className = `fa-solid fa-${speed%10}`;
+            fetch(`${adjustSpeedUrl}?speed=${speed}`, { method: 'POST' });
+            speedDisplayTens.className = `fa-solid fa-${Math.floor(speed / 10)}`;
+            speedDisplayOnes.className = `fa-solid fa-${speed % 10}`;
         } catch (error) {
             console.error('Error speeding up replay:', error);
         }
@@ -145,9 +145,9 @@ document.addEventListener('DOMContentLoaded', function () {
     speedDownBtn.addEventListener('click', () => {
         try {
             speed = Math.max(1, speed - 1);
-            fetch(`${adjustSpeedUrl}?speed=${speed}`, { method: 'POST' }); 
-            speedDisplayTens.className = `fa-solid fa-${Math.floor(speed/10)}`;
-            speedDisplayOnes.className = `fa-solid fa-${speed%10}`;
+            fetch(`${adjustSpeedUrl}?speed=${speed}`, { method: 'POST' });
+            speedDisplayTens.className = `fa-solid fa-${Math.floor(speed / 10)}`;
+            speedDisplayOnes.className = `fa-solid fa-${speed % 10}`;
         } catch (error) {
             console.error('Error slowing down replay:', error);
         }
@@ -208,5 +208,25 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    setInterval(fetchData, 1000); //TODO: will replace with SignalR live updates
+    setInterval(fetchData, 5000); //TODO: will replace with SignalR live updates
+
+    // Test SignalR
+    const connection = new signalR.HubConnectionBuilder()
+        // Use the same URL as mapped in Program.cs
+        .withUrl("http://localhost:5001/notificationHub")
+        .withAutomaticReconnect() // Highly recommended to handle disconnections
+        .build();
+
+    // 1. Define the handler for messages pushed from the server
+    // The string "ReceiveMessage" must match the name used in Clients.All.SendAsync() on the server
+    connection.on("ReceiveMessage", (user, message) => {
+        console.log(`Message from ${user}: ${message}`);
+    });
+
+    // 2. Start the connection
+    connection.start()
+        .then(() => {
+            console.log("SignalR Connected.");
+        })
+        .catch(err => console.error("Error connecting to SignalR: ", err));
 });
