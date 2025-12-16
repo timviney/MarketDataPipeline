@@ -1,6 +1,8 @@
 document.addEventListener('DOMContentLoaded', async function () {
     let previousPrice = null;
 
+    const timeMapping = {};
+
     const chart = Highcharts.chart('container', {
         chart: {
             backgroundColor: 'transparent',
@@ -16,12 +18,13 @@ document.addEventListener('DOMContentLoaded', async function () {
             lineColor: 'rgba(255, 255, 255, 0.1)',
             tickColor: 'rgba(255, 255, 255, 0.1)',
             labels: {
+                rotation: -45,
                 style: { color: 'rgba(255, 255, 255, 0.6)' },
                 formatter: function () {
-                    const series = this.axis.series[0];
-                    const point = series.points.find(p => p.x === this.value);
-                    return point?.realTime
-                        ? Highcharts.dateFormat('%d-%m %H:%M', point.realTime)
+                    const realTime = timeMapping[this.value];
+                    console.log('Formatting xAxis label for value:', this.value, 'mapped to realTime:', realTime);
+                    return realTime
+                        ? Highcharts.dateFormat('%d-%m %H:%M', realTime)
                         : '';
                 }
             }
@@ -264,7 +267,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         console.log(`Latest state: ${state}`);
         setStatus(state.status);
     });
-    
+
 
     replayConnection.on("HasBeenCleared", () => {
         console.log(`Data has been cleared.`);
@@ -303,13 +306,17 @@ document.addEventListener('DOMContentLoaded', async function () {
                 }
             }
 
+            Object.keys(timeMapping).forEach(key => delete timeMapping[key]);
+
             newData.sort((a, b) => a.realTime - b.realTime);
             let barInx = 0;
             newData.forEach(point => {
-                point.x = barInx++;
+                point.x = barInx;
+                timeMapping[barInx] = point.realTime;
+                barInx++;
             });
-            series.setData(newData, true);
 
+            series.setData(newData, true);
             updateStats(newData);
 
         } catch (error) {
@@ -325,11 +332,16 @@ document.addEventListener('DOMContentLoaded', async function () {
 
             const series = chart.series[0];
 
-            const t = new Date(calculations.tick.dateTimeKey).getTime();
+            const t = new Date(calculations.tick.dateTime).getTime();
             const sma = calculations.dailySma;
             const closingPrice = calculations.tick.close;
 
-            series.addPoint({ x: series.data.length, y: closingPrice, realTime: t, sma: sma }, true);
+            const newX = series.data.length;
+            timeMapping[newX] = t;
+
+            series.addPoint({ x: newX, y: closingPrice, realTime: t, sma: sma }, true);
+
+            chart.xAxis[0].update({}, true);
 
             updateStats(series.data);
 
