@@ -11,4 +11,9 @@ public class ReplayStatePublisher(IHubContext<ReplayHub, IReplayClient> hubConte
     {
         await hubContext.Clients.All.GetState(state);
     }
+
+    public async Task PublishClearedMessage()
+    {
+        await hubContext.Clients.All.HasBeenCleared();
+    }
 }

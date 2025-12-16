@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             backgroundColor: 'rgba(0, 0, 0, 0.8)',
             style: { color: '#fff' },
             borderColor: 'rgba(102, 126, 234, 0.5)',
-            borderRadius: 8
+            borderRadius: 8,
         },
         plotOptions: {
             series: {
@@ -131,22 +131,25 @@ document.addEventListener('DOMContentLoaded', async function () {
     const pauseUrl = 'http://localhost:5000/replay/pause';
     const stopUrl = 'http://localhost:5000/replay/stop';
     const adjustSpeedUrl = 'http://localhost:5000/replay/adjustspeed';
-    async function getStatus() {
-        //TODO: will update these with live SignalR connection
+
+    async function initialGetStatus() {
         try {
-            await new Promise(resolve => setTimeout(resolve, 500)); // Brief delay to allow server processing - will be removed with SignalR
             const response = await authorizedFetch(statusUrl);
             if (!response.ok) throw new Error('Network response was not ok');
             const state = (await response.json()).state;
-            statusEl.querySelector('span').textContent = state.status;
-            statusDot.className = state.status === 'Running' ? 'status-dot running' : state.status === 'Paused' ? 'status-dot paused' : 'status-dot stopped';
-            statusEl.className = state.status === 'Running' ? 'status running' : state.status === 'Paused' ? 'status paused' : 'status stopped';
+            setStatus(state.status);
         } catch (error) {
             console.error('Error fetching status:', error);
         }
     }
 
-    getStatus();
+    function setStatus(status) {
+        statusEl.querySelector('span').textContent = status;
+        statusDot.className = status === 'Running' ? 'status-dot running' : status === 'Paused' ? 'status-dot paused' : 'status-dot stopped';
+        statusEl.className = status === 'Running' ? 'status running' : status === 'Paused' ? 'status paused' : 'status stopped';
+    }
+
+    initialGetStatus();
 
     playBtn.addEventListener('click', () => {
         try {
@@ -154,7 +157,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         } catch (error) {
             console.error('Error starting replay:', error);
         }
-        getStatus();
+        initialGetStatus();
     });
 
     pauseBtn.addEventListener('click', () => {
@@ -163,7 +166,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         } catch (error) {
             console.error('Error pausing replay:', error);
         }
-        getStatus();
+        initialGetStatus();
     });
 
     stopBtn.addEventListener('click', () => {
@@ -172,7 +175,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         } catch (error) {
             console.error('Error stopping replay:', error);
         }
-        getStatus();
+        initialGetStatus();
     });
 
     let speed = 1;
@@ -200,6 +203,81 @@ document.addEventListener('DOMContentLoaded', async function () {
     });
 
     //////
+
+
+    // Test SignalR
+
+    const testNotificationConnection = new signalR.HubConnectionBuilder()
+        .withUrl("http://localhost:5000/notificationHub", {
+            accessTokenFactory: () => jwtToken,
+            transport: signalR.HttpTransportType.LongPolling // Websockets causing Docker issues locally
+        })
+        .withAutomaticReconnect()
+        .build();
+
+    testNotificationConnection.on("ReceiveMessage", (user, message) => {
+        console.log(`Message from ${user}: ${message}`);
+    });
+
+    testNotificationConnection.start()
+        .then(() => {
+            console.log("SignalR Notification Connected.");
+        })
+        .catch(err => console.error("Error connecting to SignalR Notification: ", err));
+
+    //////
+
+    // Symbol SignalR
+
+    const symbolConnection = new signalR.HubConnectionBuilder()
+        .withUrl("http://localhost:5000/symbolHub", {
+            accessTokenFactory: () => jwtToken,
+            transport: signalR.HttpTransportType.LongPolling // Websockets causing Docker issues locally
+        })
+        .withAutomaticReconnect()
+        .build();
+
+    symbolConnection.on("LatestCalculation", (symbol, calculations) => {
+        console.log(`Latest calculation for ${symbol}: ${calculations}`);
+        updateData(symbol, calculations);
+    });
+
+    symbolConnection.start()
+        .then(() => {
+            console.log("SignalR Symbols Connected.");
+        })
+        .catch(err => console.error("Error connecting to SignalR Symbols: ", err));
+
+    //////
+
+    // Replay SignalR
+
+    const replayConnection = new signalR.HubConnectionBuilder()
+        .withUrl("http://localhost:5000/replayHub", {
+            accessTokenFactory: () => jwtToken,
+            transport: signalR.HttpTransportType.LongPolling // Websockets causing Docker issues locally
+        })
+        .withAutomaticReconnect()
+        .build();
+
+    replayConnection.on("GetState", (state) => {
+        console.log(`Latest state: ${state}`);
+        setStatus(state.status);
+    });
+    
+
+    replayConnection.on("HasBeenCleared", () => {
+        console.log(`Data has been cleared.`);
+        fetchChartData();
+    });
+
+    replayConnection.start()
+        .then(() => {
+            console.log("SignalR Replay Connected.");
+        })
+        .catch(err => console.error("Error connecting to SignalR Replay: ", err));
+    //////
+
 
     // DATA FETCHING AND CHART UPDATING
 
@@ -232,55 +310,55 @@ document.addEventListener('DOMContentLoaded', async function () {
             });
             series.setData(newData, true);
 
-            // Update stats
-            if (newData.length > 0) {
-                const latestPoint = newData[newData.length - 1];
-                const currentPrice = latestPoint.y;
-
-                document.getElementById('current-price').textContent = currentPrice.toFixed(2) + 'p';
-                document.getElementById('daily-sma').textContent = latestPoint.sma.toFixed(2) + 'p';
-                document.getElementById('data-points').textContent = newData.length;
-                document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
-
-                if (previousPrice !== null) {
-                    const change = currentPrice - previousPrice;
-                    const changePercent = ((change / previousPrice) * 100).toFixed(2);
-                    const changeEl = document.getElementById('price-change');
-                    changeEl.textContent = `${change >= 0 ? '↑' : '↓'} ${Math.abs(change).toFixed(2)}p (${changePercent}%)`;
-                    changeEl.className = 'stat-change ' + (change >= 0 ? 'positive' : 'negative');
-                }
-
-                previousPrice = currentPrice;
-            }
+            updateStats(newData);
 
         } catch (error) {
             console.error('Fetch error:', error);
         }
     }
 
-    setInterval(fetchChartData, 5000); //TODO: will replace with SignalR live updates
+    fetchChartData(); // Get initial data
 
-    //////
+    async function updateData(symbol, calculations) {
+        try {
+            if (symbol !== 'BARC') return; // Only process BARC updates for now
 
-    // Test SignalR
+            const series = chart.series[0];
 
-    const connection = new signalR.HubConnectionBuilder()
-        .withUrl("http://localhost:5000/notificationHub", {
-            accessTokenFactory: () => jwtToken,
-            transport: signalR.HttpTransportType.LongPolling // Websockets causing Docker issues locally
-        })
-        .withAutomaticReconnect()
-        .build();
+            const t = new Date(calculations.tick.dateTimeKey).getTime();
+            const sma = calculations.dailySma;
+            const closingPrice = calculations.tick.close;
 
-    connection.on("ReceiveMessage", (user, message) => {
-        console.log(`Message from ${user}: ${message}`);
-    });
+            series.addPoint({ x: series.data.length, y: closingPrice, realTime: t, sma: sma }, true);
 
-    connection.start()
-        .then(() => {
-            console.log("SignalR Connected.");
-        })
-        .catch(err => console.error("Error connecting to SignalR: ", err));
+            updateStats(series.data);
+
+        } catch (error) {
+            console.error('Fetch error:', error);
+        }
+    }
+
+    function updateStats(newData) {
+        if (newData.length > 0) {
+            const latestPoint = newData[newData.length - 1];
+            const currentPrice = latestPoint.y;
+
+            document.getElementById('current-price').textContent = currentPrice.toFixed(2) + 'p';
+            document.getElementById('daily-sma').textContent = latestPoint.sma.toFixed(2) + 'p';
+            document.getElementById('data-points').textContent = newData.length;
+            document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+
+            if (previousPrice !== null) {
+                const change = currentPrice - previousPrice;
+                const changePercent = ((change / previousPrice) * 100).toFixed(2);
+                const changeEl = document.getElementById('price-change');
+                changeEl.textContent = `${change >= 0 ? '↑' : '↓'} ${Math.abs(change).toFixed(2)}p (${changePercent}%)`;
+                changeEl.className = 'stat-change ' + (change >= 0 ? 'positive' : 'negative');
+            }
+
+            previousPrice = currentPrice;
+        }
+    }
 
     //////
 });

@@ -16,8 +16,10 @@ public class ReplayState(Channel<StateUpdate> channel, IReplayStatePublisher sta
     
     public async Task UpdateState(bool? isRunning = null, bool? isPaused = null, int? speed = null)
     {
+        bool wasRunning;
         lock (_lock)
         {
+            wasRunning = IsRunning;
             IsRunning = isRunning ?? IsRunning;
             IsPaused = isPaused ?? IsPaused;
             Speed = speed ?? Speed;
@@ -25,5 +27,8 @@ public class ReplayState(Channel<StateUpdate> channel, IReplayStatePublisher sta
 
         await statePublisher.PublishAsync(this); // For SignalR
         await channel.Writer.WriteAsync(new StateUpdate(this)); // For APIs
+        
+        var hasBeenCleared = !wasRunning && IsRunning;
+        if (hasBeenCleared) await statePublisher.PublishClearedMessage();
     }
 }

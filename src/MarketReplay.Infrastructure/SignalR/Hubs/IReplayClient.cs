@@ -5,4 +5,5 @@ namespace MarketReplay.Infrastructure.SignalR.Hubs;
 public interface IReplayClient
 {
     Task GetState(ReplayState state);
+    Task HasBeenCleared();
 }
