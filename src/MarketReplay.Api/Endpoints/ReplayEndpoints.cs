@@ -1,5 +1,6 @@
 ﻿using System.Threading.Channels;
 using MarketReplay.Api.Background;
+using MarketReplay.Core.Application;
 using MarketReplay.Core.Domain.Interfaces;
 
 namespace MarketReplay.Api.Endpoints;
@@ -15,7 +16,7 @@ public static class ReplayEndpoints
         group.MapPost("/start", async (ReplayState state, Channel<EngineCommand> engineCommandChannel, Channel<StateUpdate> stateUpdateChannel) =>
             {
                 await engineCommandChannel.Writer.WriteAsync(new StartEngineCommand());
-                await WaitForStateUpdateAsync(stateUpdateChannel);
+                await WaitForStateUpdateAsync(stateUpdateChannel, "Running");
                 
                 return Results.Ok(new { State = state });
             })
@@ -24,8 +25,9 @@ public static class ReplayEndpoints
 
         group.MapPost("/pause", async (ReplayState state, Channel<EngineCommand> engineCommandChannel, Channel<StateUpdate> stateUpdateChannel) =>
             {
+                var expectedStatus = state.IsPaused ? "Running" : "Paused";
                 await engineCommandChannel.Writer.WriteAsync(new PauseEngineCommand());
-                await WaitForStateUpdateAsync(stateUpdateChannel);
+                await WaitForStateUpdateAsync(stateUpdateChannel, expectedStatus);
                 
                 return Results.Ok(new { State = state });
             })
@@ -35,7 +37,7 @@ public static class ReplayEndpoints
         group.MapPost("/stop", async (ReplayState state, Channel<EngineCommand> engineCommandChannel, Channel<StateUpdate> stateUpdateChannel) =>
             {
                 await engineCommandChannel.Writer.WriteAsync(new StopEngineCommand());
-                await WaitForStateUpdateAsync(stateUpdateChannel);
+                await WaitForStateUpdateAsync(stateUpdateChannel, "Stopped");
 
                 return Results.Ok(new { State = state }); 
             })
@@ -44,8 +46,9 @@ public static class ReplayEndpoints
 
         group.MapPost("/adjustspeed", async (ReplayState state, Channel<EngineCommand> engineCommandChannel, Channel<StateUpdate> stateUpdateChannel, int speed) =>
             {
+                var expectedStatus = state.Status;
                 await engineCommandChannel.Writer.WriteAsync(new AdjustSpeedEngineCommand(speed));
-                await WaitForStateUpdateAsync(stateUpdateChannel);
+                await WaitForStateUpdateAsync(stateUpdateChannel, expectedStatus);
 
                 return Results.Ok(new { State = state }); 
             })
@@ -62,9 +65,16 @@ public static class ReplayEndpoints
         return routes;
     }
 
-    private static async Task WaitForStateUpdateAsync(Channel<StateUpdate> stateUpdateChannel)
+    private static async Task<bool> WaitForStateUpdateAsync(Channel<StateUpdate> stateUpdateChannel, string expectedStatus)
     {
+        await Task.Yield();
         var maxWaitCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(2));
-        await stateUpdateChannel.Reader.WaitToReadAsync(maxWaitCancellation.Token); // wait for state to be updated
+        while (await stateUpdateChannel.Reader.WaitToReadAsync(maxWaitCancellation.Token))
+        {
+            var update = await stateUpdateChannel.Reader.ReadAsync(maxWaitCancellation.Token);
+            if (update.State.Status == expectedStatus) return true;
+        }
+        
+        return false;
     }
 }

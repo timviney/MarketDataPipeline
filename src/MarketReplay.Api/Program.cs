@@ -4,11 +4,13 @@ using MarketReplay.Api.Background;
 using MarketReplay.Api.Endpoints;
 using MarketReplay.Api.Hubs;
 using MarketReplay.Api.Validation;
+using MarketReplay.Core.Application;
 using MarketReplay.Core.Domain.Interfaces;
 using MarketReplay.Core.Services.Pipeline;
 using MarketReplay.Core.Services.Pipeline.Processors;
 using MarketReplay.Core.Services.Replay;
 using MarketReplay.Infrastructure.Data;
+using MarketReplay.Infrastructure.SignalR;
 using MarketReplay.Infrastructure.State;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.IdentityModel.Tokens;
@@ -40,12 +42,14 @@ builder.Services.AddSingleton<IMarketDataProvider, CsvMarketDataProvider>();
 builder.Services.AddSingleton<IEventPipeline, EventPipeline>();
 builder.Services.AddSingleton(Channel.CreateUnbounded<EngineCommand>());
 builder.Services.AddSingleton(Channel.CreateUnbounded<StateUpdate>());
-builder.Services.AddSingleton(sp => new ReplayState(sp.GetRequiredService<Channel<StateUpdate>>()));
+builder.Services.AddSingleton<ITickCalculationPublisher, TickCalculationPublisher>();
+builder.Services.AddSingleton<IReplayStatePublisher, ReplayStatePublisher>();
+builder.Services.AddSingleton(sp => new ReplayState(sp.GetRequiredService<Channel<StateUpdate>>(), sp.GetRequiredService<IReplayStatePublisher>()));
 builder.Services.AddHostedService<ReplayWorker>();
 builder.Services.AddSingleton<IEventProcessor[]>(sp =>
 [
     new StateStoreProcessor(sp.GetRequiredService<IMarketStateStore>()),
-    new CalculationProcessor(sp.GetRequiredService<IMarketStateStore>())
+    new CalculationProcessor(sp.GetRequiredService<IMarketStateStore>(), sp.GetRequiredService<ITickCalculationPublisher>())
 ]);
 
 JwtConfigurator.ConfigureJwtAuthentication(builder);
@@ -112,14 +116,6 @@ app.MapReplayEndpoints();
 app.MapSymbolEndpoints();
 app.MapLoginEndpoints();
 
-app.MapHub<NotificationHub>("/notificationHub").RequireAuthorization();
-
-app.MapPost("/sendNotification", async (string user, string message, IHubContext<NotificationHub> hubContext) =>
-{
-    await hubContext.Clients.All.SendAsync("ReceiveMessage", user, message);
-    return Results.Ok();
-})
-.WithName("Test Notification")
-.WithTags("_Test");
+HubMappings.MapSignalRHubs(app);
 
 app.Run();

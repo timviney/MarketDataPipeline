@@ -1,4 +1,5 @@
 ﻿using System.Threading.Channels;
+using MarketReplay.Core.Application;
 using MarketReplay.Core.Domain.Interfaces;
 
 namespace MarketReplay.Api.Background;

@@ -4,9 +4,9 @@ using MarketReplay.Core.Domain.Model;
 
 namespace MarketReplay.Core.Services.Pipeline.Processors;
 
-public class CalculationProcessor(IMarketStateStore state) : IEventProcessor
+public class CalculationProcessor(IMarketStateStore state, ITickCalculationPublisher publisher) : IEventProcessor
 {
-    public Task ProcessAsync(MarketTick tick)
+    public async Task ProcessAsync(MarketTick tick)
     {
         var symbol = tick.Symbol;
         
@@ -25,9 +25,10 @@ public class CalculationProcessor(IMarketStateStore state) : IEventProcessor
         
             sma = sum / ticksToCalculate;
         }
+
+        var tickCalculations = new TickCalculations(tick, sma);
         
-        state.UpdateCalculations(new TickCalculations(tick, sma));
-        
-        return Task.CompletedTask;
+        state.UpdateCalculations(tickCalculations);
+        await publisher.PublishAsync(tickCalculations);
     }
 }

@@ -11,6 +11,9 @@ public static class LoginEndpoints
         group.MapGet("/", (TokenService tokenService) =>
             {
                 var token = tokenService.CreateToken("12345", "admin");
+                
+                // Pretending here that this is some external service like Auth0 that actually authenticates the user
+                // before returning a valid token to use for the APIs/SignalR
 
                 return Results.Ok(new { Token = token });
             })

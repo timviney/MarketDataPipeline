@@ -1,4 +1,4 @@
-﻿namespace MarketReplay.Api.Background;
+﻿namespace MarketReplay.Core.Application;
 
 public record StateUpdate(ReplayState State)
 {

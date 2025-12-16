@@ -1,9 +1,10 @@
 ﻿using System.Threading.Channels;
+using MarketReplay.Core.Domain.Interfaces;
 
-namespace MarketReplay.Api.Background;
+namespace MarketReplay.Core.Application;
 
 // Singleton - source of truth
-public class ReplayState(Channel<StateUpdate> channel)
+public class ReplayState(Channel<StateUpdate> channel, IReplayStatePublisher statePublisher)
 {
     private readonly object _lock = new();
 
@@ -22,6 +23,7 @@ public class ReplayState(Channel<StateUpdate> channel)
             Speed = speed ?? Speed;
         }
 
-        await channel.Writer.WriteAsync(new StateUpdate(this));
+        await statePublisher.PublishAsync(this); // For SignalR
+        await channel.Writer.WriteAsync(new StateUpdate(this)); // For APIs
     }
 }
