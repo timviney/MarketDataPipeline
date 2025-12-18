@@ -5,7 +5,8 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace MarketReplay.Infrastructure.SignalR;
 
-public class TickCalculationPublisher(IHubContext<SymbolHub, ISymbolClient> hubContext) : ITickCalculationPublisher
+// Depreciated! Now consumes from Kafka instead
+public class SignalRTickCalculationPublisher(IHubContext<SymbolHub, ISymbolClient> hubContext) : ITickCalculationPublisher
 {
     public async Task PublishAsync(TickCalculations calculation)
     {
