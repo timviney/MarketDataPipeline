@@ -25,6 +25,19 @@ services:
       interval: 2s
       timeout: 5s
       retries: 10
+  
+  postgres:
+    image: postgres:16
+    container_name: market-replay-postgres
+    environment:
+      POSTGRES_DB: marketreplay
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./scripts/postgres/init:/docker-entrypoint-initdb.d/
+      - postgres_data:/var/lib/postgresql/data
 
   market-replay-api:
     depends_on:
@@ -47,3 +60,7 @@ services:
       context: ./frontend
     ports:
       - "8080:80" # Frontend on host port 8080
+
+
+volumes:
+  postgres_data:

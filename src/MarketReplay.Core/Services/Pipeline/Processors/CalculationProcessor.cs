@@ -14,17 +14,14 @@ public class CalculationProcessor(IMarketStateStore state, ITickCalculationPubli
         
         // daily SMA
         const int ticksToCalculate = 288; // 1 day in 5min ticks
-        decimal sma = 0;
-        if (ticks.Count < ticksToCalculate)
-        {
-            // This will be slow, would need to key by date in storage to optimise this better
-            var slice = ticks.ToImmutableSortedDictionary()
-                .TakeLast(ticksToCalculate);
 
-            var sum = slice.Sum(p => p.Value.Close);
+        // This will be slow, would need to key by date in storage to optimise this better
+        var slice = ticks.ToImmutableSortedDictionary()
+            .TakeLast(ticksToCalculate);
+
+        var sum = slice.Sum(p => p.Value.Close);
         
-            sma = sum / ticksToCalculate;
-        }
+        var sma = sum / ticksToCalculate;
 
         var tickCalculations = new TickCalculations(tick, sma);
         

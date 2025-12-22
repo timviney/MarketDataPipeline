@@ -61,6 +61,14 @@ builder.Services.Configure<HubOptions>(options =>
 
 builder.Services.AddSignalR();
 
+builder.Services.AddSingleton<IDbConnectionFactory>(_ =>
+    new PostgresConnectionFactory(
+        "Host=postgres;Port=5432;Database=marketreplay;Username=admin;Password=password"));
+
+builder.Services.AddSingleton<TickCalcMapper>();
+builder.Services.AddScoped<ITickCalcRepository, TickCalcRepository>();
+builder.Services.AddSingleton<IPersistenceResetter, PostgresResetter>();
+
 // builder.Services.AddSingleton<ITickCalculationPublisher, SignalRTickCalculationPublisher>(); // Replaced with Kafka as Broker
 builder.Services.AddSingleton<KafkaTopicCreator>();
 builder.Services.AddSingleton<IProducer<string, string>>(_ => KafkaProducerFactory.Create("kafka:9092"));
