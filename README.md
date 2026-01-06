@@ -8,9 +8,9 @@ This repository contains a .NET backend (API + replay engine), an infrastructure
 
 ## Key Features
 
-- **Replay Engine:** Read time-series CSV market data and replay it at adjustable speed.
-- **Calculations:** Produce derived tick calculations and publish them for downstream consumers.
-- **Persistence:** Store calculated ticks in Postgres.
+- **Replay Engine:** Reads time-series CSV market data and replays it at adjustable speed.
+- **Calculations:** Produces derived tick calculations and publishes them for downstream consumers.
+- **Persistence:** Stores calculated ticks in Postgres.
 - **Realtime UI:** A frontend dashboard connects via SignalR to control replay and show results.
 - **Dockerized:** Compose file to run the full stack locally.
 
